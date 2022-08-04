@@ -1,0 +1,73 @@
+---
+  - hosts: all
+  
+    vars_files:
+      - myvault.yaml
+      
+    vars:
+      maas_admin_user: "{{ vault_maas_admin_user | default('admin') }}"
+      maas_admin_paasword: "{{ vault_maas_admin_password | default('admin') }}"
+      maas_admin_email: "{{ vault_maas_admin_email | default('admin@gmail.com') }}"
+      
+    tasks:
+      - name: find maas application
+        shell: "which maas"
+        ignore_errors: yes
+        register: result
+        tags:
+          - all
+          - preinstall
+
+      - name: check maas installation
+        meta: end_host
+        when: result.rc == 0
+        tags:
+          - all
+          - preinstall
+      
+      - name: upgrade system
+        apt:
+          update_cache: yes
+          upgrade: full
+        tags:
+          - all
+          - install
+          
+      - name: add maas package repository
+        apt_repository:
+          repo: ppa:maas/3.2
+          state: present
+        tags:
+          - all
+          - install
+            
+      - name: update apt cache
+        apt:
+          update_cache: yes
+        tags:
+          - all
+          - install
+            
+      - name: install maas package
+        apt:
+          name: maas
+          state: present
+        tags:
+          - all
+          - install
+        
+      - name: create maas admin user
+        shell: "maas createadmin --username {{ maas_admin_user }} --password {{ maas_admin_paasword }} --email {{ maas_admin_email }}"
+        ignore_errors: yes
+        tags:
+          - all
+          - install
+          - init
+      - name: print maas info
+        debug:
+          msg: "MAAS URL: http://{{ ansible_facts.all_ipv4_addresses[0] }}:5240/MAAS"
+        tags:
+          - all
+          - install
+          - init
+          - info
