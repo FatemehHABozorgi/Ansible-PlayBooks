@@ -63,6 +63,7 @@
           - all
           - install
           - init
+          
       - name: print maas info
         debug:
           msg: "MAAS URL: http://{{ ansible_facts.all_ipv4_addresses[0] }}:5240/MAAS"
