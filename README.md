@@ -1,3 +1,3 @@
-# ansible-install-MASS
+# ansible-install-MAAS
 
 The project is inprogress
