@@ -8,12 +8,11 @@ Welcome to the Ansible Playbook Repository. This repository contains a collectio
 - [Directory Structure](#directory-structure)
 - [Requirements](#requirements)
 - [Getting Started](#getting-started)
-  - [Installation](#installation)
-  - [Usage](#usage)
+- [Usage](#usage)
 - [Playbooks](#playbooks)
   - [Example Playbooks](#example-playbooks)
 - [Contributing](#contributing)
-- [License](#license)
+- [Author](#author)
 
 ## Overview
 
@@ -48,36 +47,41 @@ ansible-playbook-repo/
 ## Requirements
 Before running the playbooks, ensure that the following requirements are met:
 
-Ansible: Version 2.9 or later.
-Python: Version 3.6 or later.
-Appropriate SSH keys or credentials for the target machines.
-Inventory file configured for your environment.
+- **Ansible: Version 2.9 or later.
+- **Python: Version 3.6 or later.
+- **Appropriate SSH keys or credentials for the target machines.
+- **Inventory file configured for your environment.
 
 ## Getting Started
 Clone the repository to your local machine:
 ```
-git clone https://github.com/FatemehHABozorgi/Ansible-PlayBooks.git
+git clone https://github.com/FatemehHABozorgi/Ansible-Playbook-Repo.git
 cd ansible-playbook-repo
 ```
 Configure your inventory file located in the inventory/ directory. Update the hosts.ini file with your server details.
 
-Usage
+## Usage
 To run a playbook, use the following command:
 
-bash
-Copy code
+```
 ansible-playbook -i inventory/hosts.ini playbooks/playbook1.yml
+```
 You can specify additional options, such as tags or limiting the run to specific hosts:
 
-bash
-Copy code
+```
 ansible-playbook -i inventory/hosts.ini playbooks/playbook1.yml --tags "tag_name" --limit "host_group"
-Playbooks
+```
+
+## Playbooks
 Each playbook is designed to automate specific tasks. Below is a list of some of the key playbooks included in this repository:
 
-Example Playbooks
+### Example Playbooks
 playbook1.yml: Description of what this playbook does.
 playbook2.yml: Description of what this playbook does.
 Each playbook is documented internally with comments and variable explanations to ensure ease of understanding and modification.
 
-Contributing
+## Contributing
+Contributions are welcome! Please fork the repository and create a pull request with your changes.
+
+## Author
+Created by Fatemeh Haji Agha Bozorgi.
