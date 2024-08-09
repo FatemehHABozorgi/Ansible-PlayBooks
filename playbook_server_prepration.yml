@@ -40,9 +40,9 @@
           create: yes
           block: |
             [global]
-            index = http://mci-repo.unix.mci.ir:8081/repository/pypi/
-            index-url = http://mci-repo.unix.mci.ir:8081/repository/pypi/simple
-            trusted-host = mci-repo.unix.mci.ir
+            index = http://repo-sample.ir:8081/repository/pypi/
+            index-url = http://repo-sample.ir:8081/repository/pypi/simple
+            trusted-host = repo-sample.ir
 
       - name: Copy add disk automation to the server
         copy:
@@ -63,9 +63,9 @@
           groups: wheel
           append: yes
           state: present
-          password: "{{ 'QAZqaz@123456' | password_hash ('sha512') }}"
+          password: "{{ 'password' | password_hash ('sha512') }}"
         loop:
-          - i.jafari
+          - bozorgi
 
       - name: Create users file
         file:
