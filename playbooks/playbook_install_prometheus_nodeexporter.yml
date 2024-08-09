@@ -1,0 +1,199 @@
+---
+- name: Install Prometheus and Node Exporter
+  hosts: deploy01
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Copy Prometheus and Node Exporter packages
+      copy:
+        src: /data/ansible/monitoring/
+        dest: /tmp/
+
+    - name: Extract Prometheus package
+      shell: |
+        tar -xvf /tmp/prometheus-2.45.4.linux-amd64.tar.gz -C /tmp/
+      args:
+        executable: /bin/bash
+
+    - name: Move Prometheus and Promtool binaries
+      command: mv "{{ item }}" /usr/local/bin/
+      with_items:
+        - /tmp/prometheus-2.45.4.linux-amd64/prometheus
+        - /tmp/prometheus-2.45.4.linux-amd64/promtool
+
+    - name: Copy consoles and console_libraries directories
+      command: cp -r "{{ item }}" /etc/prometheus/
+      with_items:
+        - /tmp/prometheus-2.45.4.linux-amd64/consoles/
+        - /tmp/prometheus-2.45.4.linux-amd64/console_libraries/
+
+    - name: Copy prometheus.yml
+      copy:
+        src: /etc/prometheus/prometheus.yml
+        dest: /etc/prometheus/
+
+    - name: Create Prometheus user
+      command: groupadd --system prometheus
+      ignore_errors: yes
+
+    - name: Add Prometheus user to the system group
+      command: useradd -s /sbin/nologin --system -g prometheus prometheus
+      ignore_errors: yes
+
+    - name: Set ownership of directories to Prometheus user
+      file:
+        path: "{{ item }}"
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+      with_items:
+        - /etc/prometheus/
+        - /var/lib/prometheus/
+
+    - name: Set permissions on directories
+      command: chmod -R 775 "{{ item }}"
+      with_items:
+        - /etc/prometheus/
+        - /var/lib/prometheus/
+
+    - name: Set ownership of Prometheus binaries
+      command: chown prometheus:prometheus "{{ item }}"
+      with_items:
+        - /usr/local/bin/prometheus
+        - /usr/local/bin/promtool
+
+    - name: Create prometheus.service file
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Restart=always
+          Type=simple
+          ExecStart=/usr/local/bin/prometheus \
+              --config.file=/etc/prometheus/prometheus.yml \
+              --web.config.file=/etc/prometheus/web.yml \
+              --storage.tsdb.path=/var/lib/prometheus/ \
+              --web.console.templates=/etc/prometheus/consoles \
+              --web.console.libraries=/etc/prometheus/console_libraries \
+              --web.listen-address=0.0.0.0:9090
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Create prometheus.yml
+      copy:
+        dest: /etc/prometheus/prometheus.yml
+        content: |
+          # my global config
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+
+          # Alertmanager configuration
+          alerting:
+            alertmanagers:
+              - static_configs:
+                  - targets:
+            # Load rules once and periodically evaluate them
+          rule_files:
+              # - "first_rules.yml"
+              # - "second_rules.yml"
+
+          # A scrape configuration containing exactly one endpoint to scrape
+          scrape_configs:
+            - job_name: "prometheus"
+              static_configs:
+                - targets: ["{{ ansible_default_ipv4.address }}:9100"]
+
+    - name: Create web.yml with required token
+      copy:
+        dest: /etc/prometheus/web.yml
+        content: |
+          basic_auth_users:
+              admin: vD6L
+
+    - name: Start and enable Prometheus service
+      systemd:
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Reload systemd service
+      systemd:
+        daemon_reload: yes
+
+    - name: Extract Node Exporter package
+      shell: |
+        tar -xvf /tmp/node_exporter-1.8.0.linux-amd64.tar.gz -C /tmp/
+      args:
+        executable: /bin/bash
+
+    - name: Create node_exporter user
+      command: groupadd --system node_exporter
+      ignore_errors: yes
+
+    - name: Add node_exporter user to the system group
+      command: useradd -s /sbin/nologin --system -g node_exporter node_exporter
+
+    - name: Move Node Exporter binary
+      command: mv /tmp/node_exporter-1.8.0.linux-amd64/node_exporter /usr/local/bin/
+
+    - name: Set ownership of Node Exporter binary
+      command: chown node_exporter:node_exporter /usr/local/bin/node_exporter
+
+    - name: Create node_exporter.service file
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=node_exporter
+          Group=node_exporter
+          Type=simple
+          ExecStart=/usr/local/bin/node_exporter --collector.systemd --web.listen-address=0.0.0.0:9100
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start and enable Node Exporter service
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+
+    - name: Reload systemd service
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart Prometheus
+      command: systemctl restart prometheus
+
+    - name: Check Prometheus service status
+      command: systemctl status prometheus
+      register: prometheus_status
+
+    - name: Debugging info
+      debug:
+        var: prometheus_status
+
+    - name: Check node_exporter service status
+      command: systemctl status node_exporter.service
+      register: node_exporter_status
+
+    - name: Debugging info
+      debug:
+        var: node_exporter_status
