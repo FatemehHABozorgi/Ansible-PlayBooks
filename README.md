@@ -76,8 +76,11 @@ ansible-playbook -i inventory/hosts.ini playbooks/playbook1.yml --tags "tag_name
 Each playbook is designed to automate specific tasks. Below is a list of some of the key playbooks included in this repository:
 
 ### Example Playbooks
+
 playbook1.yml: Description of what this playbook does.
+
 playbook2.yml: Description of what this playbook does.
+
 Each playbook is documented internally with comments and variable explanations to ensure ease of understanding and modification.
 
 ## Contributing
