@@ -1,7 +1,0 @@
----
-  - hosts: all
-    become: yes
-    tasks:
-      - name: collect & check the required information
-        debug:
-          var: ansible_facts
