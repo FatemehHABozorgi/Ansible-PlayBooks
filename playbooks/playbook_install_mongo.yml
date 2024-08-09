@@ -1,0 +1,83 @@
+---
+- name: Install Mongo DB
+  hosts: stg01
+  become: yes
+  gather_facts: yes
+  vars:
+    mongo_dir_name: "Mongo6.0.9-RHEL8"
+  tasks:
+    - name: Creating Admin users
+      user:
+        name: "{{ item }}"
+        groups: wheel, appuser
+        append: yes
+        state: present
+        password: "{{ 'password' | password_hash ('sha512') }}"
+      loop:
+        - bozorgi
+        - mongo-admin
+
+    - name: Copy MongoDB packages
+      copy:
+        src: "/data/ansible/{{ mongo_dir_name }}"
+        dest: /data/users/appuser/
+        owner: root
+        group: root
+
+    - name: Install required python packages
+      yum:
+        name:
+          - python3.11
+          - python3.11-pip
+          - python36.x86_64
+          - cyrus-sasl.x86_64
+        state: present
+      ignore_errors: yes
+
+    - name: Find MongoDB RPM files
+      find:
+        paths: "/data/users/appuser/{{ mongo_dir_name }}/"
+        patterns: "{{ item }}*.rpm"
+      loop:
+        - mongodb-cli
+        - mongodb-database-tools
+        - mongodb-mongosh
+        - mongodb-org-database-tools-extra
+        - mongodb-org-mongos
+        - mongodb-org-server
+        - mongodb-org-tools
+        - mongodb-org-database-6
+        - mongodb-org-6
+      register: found_files
+      loop_control:
+        label: "{{ item }}"
+
+
+    - name: Combine found RPM files
+      set_fact:
+        rpm_files: "{{ rpm_files | default([]) + found_files.results | map(attribute='files') | flatten | map(attribute='path') | list }}"
+
+    - name: Debug - List combined RPM files
+      debug:
+        var: rpm_files
+
+    - name: Install MongoDB RPMs
+      command: rpm -i "{{ item }}"
+      loop: "{{ rpm_files }}"
+      become: yes
+
+    - name: disble the mongod service
+      systemd:
+        name: mongod
+        state: stopped
+        enabled: no
+
+    - name: Install required pip packages
+      pip:
+        name:
+          - numpy
+          - pandas
+          - pymongo
+        executable: pip3.11
+      ignore_errors: yes
+
