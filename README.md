@@ -38,19 +38,19 @@ ansible-playbook-repo/
 
 ```
 
-- **playbooks/: Contains the individual playbooks.
-- **roles/: Stores reusable roles that can be referenced within playbooks.
-- **inventory/: Hosts and groups definitions.
-- **ansible.cfg: Ansible configuration file to define environment-specific settings.
+- **playbooks/**: Contains the individual playbooks.
+- **roles/**: Stores reusable roles that can be referenced within playbooks.
+- **inventory/**: Hosts and groups definitions.
+- **ansible.cfg**: Ansible configuration file to define environment-specific settings.
 
 
 ## Requirements
 Before running the playbooks, ensure that the following requirements are met:
 
-- **Ansible: Version 2.9 or later.
-- **Python: Version 3.6 or later.
-- **Appropriate SSH keys or credentials for the target machines.
-- **Inventory file configured for your environment.
+- **Ansible**: Version 2.9 or later.
+- **Python**: Version 3.6 or later.
+- Appropriate SSH keys or credentials for the target machines.
+- Inventory file configured for your environment.
 
 ## Getting Started
 Clone the repository to your local machine:
