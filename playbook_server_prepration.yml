@@ -1,0 +1,92 @@
+---
+  - hosts: pgdb03
+    become: true
+    gather_facts: no
+
+    tasks:
+      - name: Disable Selinux
+        copy:
+          dest: /etc/selinux/config
+          content: |
+            # This file controls the state of SELinux on the system.
+            # SELINUX= can take one of these three values:
+            #     enforcing - SELinux security policy is enforced.
+            #     permissive - SELinux prints warnings instead of enforcing.
+            #     disabled - No SELinux policy is loaded.
+            SELINUX=disabled
+            # SELINUXTYPE= can take one of these three values:
+            #     targeted - Targeted processes are protected,
+            #     minimum - Modification of targeted policy. Only selected processes are protected.
+            #     mls - Multi Level Security protection.
+            SELINUXTYPE=targeted
+
+      - name: Install required python packages
+        yum:
+          name:
+            - python3.11
+            - python3.11-pip
+            - python36.x86_64
+          state: present
+
+      - name: Ensure /etc/pip.conf file exists
+        file:
+          path: /etc/pip.conf
+          state: touch
+          mode: '0644'
+
+      - name: Configure pip to use the local repository
+        blockinfile:
+          path: /etc/pip.conf
+          create: yes
+          block: |
+            [global]
+            index = http://mci-repo.unix.mci.ir:8081/repository/pypi/
+            index-url = http://mci-repo.unix.mci.ir:8081/repository/pypi/simple
+            trusted-host = mci-repo.unix.mci.ir
+
+      - name: Copy add disk automation to the server
+        copy:
+          src: /data/ansible/script/disk-automation-lvm.sh
+          dest: /root
+          owner: root
+          group: root
+          mode: '0775'
+
+      - name: Run the disk automation script
+        shell: sh /root/disk-automation-lvm.sh
+        args:
+          executable: /bin/bash
+
+      - name: Creating Admin users
+        user:
+          name: "{{ item }}"
+          groups: wheel
+          append: yes
+          state: present
+          password: "{{ 'QAZqaz@123456' | password_hash ('sha512') }}"
+        loop:
+          - i.jafari
+
+      - name: Create users file
+        file:
+          path: /data/users
+          state: directory
+          mode: '0755'
+
+      - name: Creating appuser
+        user:
+          name: appuser
+          shell: /bin/bash
+          home: /data/users/appuser
+
+      - name: Set ownership and permissions for appuser home directory
+        file:
+          path: /data/users/appuser
+          state: directory
+          owner: appuser
+          group: appuser
+          mode: '0775'
+
+      - name: Reboot machine and send a message
+        reboot:
+          msg: "Rebooting machine in 5 seconds"
